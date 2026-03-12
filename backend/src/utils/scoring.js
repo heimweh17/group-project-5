@@ -14,8 +14,11 @@ export function accuracyRate(correctVotes, totalVotes) {
 
 export function computeBadges(user) {
   const badges = new Set(user.badges || []);
-  if (user.totalVotes >= 1) badges.add("first_vote");
-  if (user.totalVotes >= 20 && user.accuracyRate >= 80) badges.add("sharp_eye");
-  if (user.reputationScore >= 200) badges.add("cyber_guard");
+  if (user.totalVotes >= 1) badges.add("First Vote");
+  if (user.totalVotes < 10) badges.add("New User");
+  if (user.totalVotes >= 20 && user.accuracyRate >= 80) badges.add("Sharp eyes");
+  if (user.reputationScore >= 200) badges.add("Cyber Guardian");
+  if (user.totalVotes >= 50) badges.add("50 Votes");
   return Array.from(badges);
 }
+
