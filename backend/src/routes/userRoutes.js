@@ -8,6 +8,97 @@ import { User } from "../models/User.js";
 
 const router = express.Router();
 
+function calculateDifficultyBadges(difficultyBreakdown) {
+  const badges = [];
+  
+  // Define thresholds for badges: [threshold, badge_name]
+  const thresholds = [
+    [5, "Novice"],
+    [15, "Expert"],
+    [30, "Master"],
+  ];
+  
+  for (const [difficulty, stats] of Object.entries(difficultyBreakdown)) {
+    for (const [threshold, level] of thresholds) {
+      if (stats.correct >= threshold) {
+        const badgeName = `${level}_${difficulty}`;
+        badges.push(badgeName);
+      }
+    }
+  }
+  
+  return badges;
+}
+
+function calculateStreakBadges(votes) {
+  const badges = [];
+  
+  // Calculate current streak (consecutive correct answers)
+  let currentStreak = 0;
+  let maxStreak = 0;
+  
+  // Votes are sorted by createdAt descending, so we need to reverse for chronological order
+  const chrono = [...votes].reverse();
+  
+  for (const vote of chrono) {
+    if (vote.isCorrect) {
+      currentStreak += 1;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else {
+      currentStreak = 0;
+    }
+  }
+  
+  // Award streak badges based on max streak achieved
+  if (maxStreak >= 5) badges.push("Hot_Streak_5");
+  if (maxStreak >= 10) badges.push("Fire_Streak_10");
+  if (maxStreak >= 25) badges.push("Legendary_Streak_25");
+  if (maxStreak >= 50) badges.push("Unstoppable_Streak_50");
+  
+  return badges;
+}
+
+function calculatePointBadges(reputationScore) {
+  const badges = [];
+  
+  const milestones = [
+    [100, "Century"],
+    [500, "Five_Hundred"],
+    [1000, "Millennium"],
+    [2500, "Apex"],
+    [5000, "Godlike"],
+  ];
+  
+  for (const [points, name] of milestones) {
+    if (reputationScore >= points) {
+      badges.push(`${name}_${points}`);
+    }
+  }
+  
+  return badges;
+}
+
+async function calculateLeaderboardBadges(userId) {
+  const badges = [];
+  
+  // Get all users ranked by reputation score
+  const rankedUsers = await User.find({ role: "user" })
+    .select("_id reputationScore")
+    .sort({ reputationScore: -1 })
+    .lean();
+  
+  const userRank = rankedUsers.findIndex((u) => u._id.toString() === userId.toString()) + 1;
+  
+  if (userRank && userRank > 0) {
+    if (userRank <= 10) badges.push("Top_10_Leaderboard");
+    if (userRank <= 25) badges.push("Top_25_Leaderboard");
+    if (userRank <= 50) badges.push("Top_50_Leaderboard");
+    if (userRank <= 100) badges.push("Top_100_Leaderboard");
+  }
+  
+  return badges;
+}
+
 function buildAnsweredCases(votes) {
   const seen = new Set();
   const answered = [];
@@ -70,6 +161,21 @@ async function buildUserProfilePayload(user, viewerRole = "public") {
     if (vote.isCorrect) difficultyBreakdown[difficulty].correct += 1;
   }
 
+  const difficultyBadges = calculateDifficultyBadges(difficultyBreakdown);
+  const streakBadges = calculateStreakBadges(userVotes);
+  const pointBadges = calculatePointBadges(user.reputationScore);
+  const leaderboardBadges = await calculateLeaderboardBadges(user._id);
+  
+  const allBadges = [
+    ...new Set([
+      ...user.badges,
+      ...difficultyBadges,
+      ...streakBadges,
+      ...pointBadges,
+      ...leaderboardBadges,
+    ]),
+  ];
+
   const baseProfile = {
     id: user._id,
     username: user.username,
@@ -80,7 +186,7 @@ async function buildUserProfilePayload(user, viewerRole = "public") {
     totalVotes: user.totalVotes,
     correctVotes: user.correctVotes,
     completedCasesCount: user.completedCases.length,
-    badges: user.badges,
+    badges: allBadges,
     commentsCount,
     progressPercent,
     confidenceScore,

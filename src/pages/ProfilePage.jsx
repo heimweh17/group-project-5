@@ -10,6 +10,112 @@ import {
 } from "../components/ProfileBlocks";
 import { api } from "../lib/api";
 
+function DifficultyBadges({ badges, role }) {
+  // Categorize badges
+  const difficultyBadges = badges?.filter((b) => b.includes("_easy") || b.includes("_medium") || b.includes("_hard")) || [];
+  const streakBadges = badges?.filter((b) => b.includes("Streak")) || [];
+  const pointBadges = badges?.filter((b) => b.includes("_") && !b.includes("Streak") && !b.includes("_easy") && !b.includes("_medium") && !b.includes("_hard") && !b.includes("Leaderboard")) || [];
+  const leaderboardBadges = badges?.filter((b) => b.includes("Leaderboard")) || [];
+  const otherBadges = badges?.filter((b) => !b.includes("_easy") && !b.includes("_medium") && !b.includes("_hard") && !b.includes("Streak") && !b.includes("Leaderboard") && !b.includes("_")) || [];
+
+  const getBadgeColor = (badge) => {
+    // Difficulty badges
+    if (badge.startsWith("Novice")) return "#3b82f6"; // blue
+    if (badge.startsWith("Expert")) return "#8b5cf6"; // purple
+    if (badge.startsWith("Master")) return "#f59e0b"; // amber
+    
+    // Streak badges
+    if (badge.includes("Hot_Streak")) return "#ef4444"; // red
+    if (badge.includes("Fire_Streak")) return "#ea580c"; // orange
+    if (badge.includes("Legendary_Streak")) return "#facc15"; // yellow
+    if (badge.includes("Unstoppable_Streak")) return "#dc2626"; // dark red
+    
+    // Points badges
+    if (badge.includes("Century") || badge.includes("Five_Hundred") || badge.includes("Millennium") || badge.includes("Apex") || badge.includes("Godlike")) return "#06b6d4"; // cyan
+    
+    // Leaderboard badges
+    if (badge.includes("Top_10")) return "#dc2626"; // red
+    if (badge.includes("Top_25")) return "#f59e0b"; // amber
+    if (badge.includes("Top_50")) return "#06b6d4"; // cyan
+    if (badge.includes("Top_100")) return "#6366f1"; // indigo
+    
+    return "#6b7280"; // gray
+  };
+
+  const getBadgeEmoji = (badge) => {
+    // Difficulty
+    if (badge.includes("_easy")) return "🟢";
+    if (badge.includes("_medium")) return "🟡";
+    if (badge.includes("_hard")) return "🔴";
+    
+    // Streak
+    if (badge.includes("Hot_Streak")) return "🔥";
+    if (badge.includes("Fire_Streak")) return "🌪️";
+    if (badge.includes("Legendary_Streak")) return "⭐";
+    if (badge.includes("Unstoppable_Streak")) return "💥";
+    
+    // Points
+    if (badge.includes("Century")) return "💯";
+    if (badge.includes("Five_Hundred")) return "💰";
+    if (badge.includes("Millennium")) return "💎";
+    if (badge.includes("Apex")) return "🏆";
+    if (badge.includes("Godlike")) return "👑";
+    
+    // Leaderboard
+    if (badge.includes("Top_10")) return "🥇";
+    if (badge.includes("Top_25")) return "🥈";
+    if (badge.includes("Top_50")) return "🥉";
+    if (badge.includes("Top_100")) return "🎖️";
+    
+    return "";
+  };
+
+  const formatBadgeName = (badge) => {
+    return badge.replaceAll("_", " ");
+  };
+
+  const renderBadgeGroup = (badgeList, title) => {
+    if (badgeList.length === 0) return null;
+    return (
+      <div key={title} style={{ marginBottom: "12px" }}>
+        <p style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase", color: "#6b7280", marginBottom: "6px" }}>{title}</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {badgeList.map((badge) => (
+            <span
+              key={badge}
+              className="badge-pill"
+              style={{
+                backgroundColor: getBadgeColor(badge),
+                color: "white",
+                fontSize: "12px",
+                fontWeight: "600",
+                padding: "6px 12px",
+                borderRadius: "20px",
+              }}
+            >
+              {getBadgeEmoji(badge)} {formatBadgeName(badge)}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="badge-row">
+      <span className="badge-pill role-pill">{role}</span>
+      <div style={{ marginTop: "12px" }}>
+        {renderBadgeGroup(difficultyBadges, "Difficulty Mastery")}
+        {renderBadgeGroup(streakBadges, "Streaks")}
+        {renderBadgeGroup(pointBadges, "Point Milestones")}
+        {renderBadgeGroup(leaderboardBadges, "Leaderboard")}
+        {renderBadgeGroup(otherBadges, "Other")}
+        {badges?.length === 0 && <span>No badges yet</span>}
+      </div>
+    </div>
+  );
+}
+
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
@@ -30,12 +136,7 @@ function ProfilePage() {
           <p className="eyebrow">Learning Profile</p>
           <h2>{profile.username}</h2>
           <p className="supporting-copy">{profile.email}</p>
-          <div className="badge-row">
-            <span className="badge-pill role-pill">{profile.role}</span>
-            {profile.badges?.length
-              ? profile.badges.map((badge) => <span key={badge}>{badge.replaceAll("_", " ")}</span>)
-              : <span>No badges yet</span>}
-          </div>
+          <DifficultyBadges badges={profile.badges} role={profile.role} />
         </div>
         <div className="profile-focus-card">
           <span className="metric-label">Training completion</span>
