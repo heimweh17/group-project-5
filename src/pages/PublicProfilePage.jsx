@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 // Copy of DifficultyBadges from ProfilePage for consistent achievement display
 function DifficultyBadges({ badges, role }) {
@@ -115,15 +115,15 @@ function PublicProfilePage() {
   const [error, setError] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
 
-  async function loadProfile() {
+  const loadProfile = useCallback(async () => {
     const result = await api(`/users/${id}`);
     setProfile(result.user);
     setViewerRole(result.viewerRole || "public");
-  }
+  }, [id, setProfile, setViewerRole]);
 
   useEffect(() => {
     loadProfile().catch((err) => setError(err.message));
-  }, [id]);
+  }, [loadProfile]);
 
   async function deleteComment(commentId) {
     try {
