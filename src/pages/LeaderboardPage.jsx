@@ -124,6 +124,7 @@ function MemberPicker({ group, onClose, onMembersChanged }) {
   );
 }
 
+
 function LeaderboardPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState([]);
@@ -131,8 +132,41 @@ function LeaderboardPage() {
   const [groups, setGroups] = useState([]);
   const [activeGroup, setActiveGroup] = useState(null);
   const [pickerGroup, setPickerGroup] = useState(null);
+  const [friendsGroup, setFriendsGroup] = useState({ id: "__friends__", name: "Friends" });
+  const [friends, setFriends] = useState([]);
+
+  // Load user's friends for the Friends leaderboard
+  useEffect(() => {
+    async function fetchFriends() {
+      if (!user) return;
+      try {
+        const res = await api("/users/friends/list");
+        setFriends(res.friends || []);
+      } catch {}
+    }
+    fetchFriends();
+  }, [user]);
 
   const loadLeaderboard = useCallback(async (groupId = null) => {
+    if (groupId === "__friends__") {
+      // Show leaderboard for friends
+      if (!friends.length) {
+        setRows([]);
+        return;
+      }
+      try {
+        const ids = [user.id, ...friends.map(f => f._id || f.id)];
+        const result = await api("/leaderboard", {
+          method: "POST",
+          body: JSON.stringify({ userIds: ids }),
+          headers: { "Content-Type": "application/json" },
+        });
+        setRows(result?.leaderboard ?? []);
+      } catch (err) {
+        setError(err.message);
+      }
+      return;
+    }
     const url = groupId ? `/leaderboard?group=${groupId}` : "/leaderboard";
     try {
       const result = await api(url);
@@ -140,7 +174,7 @@ function LeaderboardPage() {
     } catch (err) {
       setError(err.message);
     }
-  }, []);
+  }, [friends, user]);
 
   const loadGroups = useCallback(async () => {
     try {
@@ -222,7 +256,14 @@ function LeaderboardPage() {
         >
           Global
         </button>
-        {groups.map((group) => (
+        <button
+          className={`group-tab ${activeGroup === "__friends__" ? "active" : ""}`}
+          onClick={() => selectGroup("__friends__")}
+          type="button"
+        >
+          Friends
+        </button>
+        {groups.map((group, idx) => (
           <span key={group.id} className="group-tab-wrap">
             <button
               className={`group-tab ${activeGroup === group.id ? "active" : ""}`}

@@ -6,35 +6,59 @@ import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
+
+// GET: leaderboard by group or all
 router.get("/", async (req, res) => {
   const { group: groupId } = req.query;
-
   try {
     let userFilter = {};
-
     if (groupId) {
       if (!mongoose.Types.ObjectId.isValid(groupId)) {
         return res.status(400).json({ error: "Invalid group id" });
       }
-
       const group = await LeaderboardGroup.findById(groupId).select("members").lean();
       if (!group) {
         return res.status(404).json({ error: "Group not found" });
       }
-
       if (!group.members?.length) {
         return res.json({ leaderboard: [] });
       }
-
       userFilter = { _id: { $in: group.members } };
     }
-
     const users = await User.find(userFilter)
       .sort({ reputationScore: -1, accuracyRate: -1, createdAt: 1 })
       .limit(50)
       .select("username reputationScore level accuracyRate totalVotes badges")
       .lean();
+    return res.json({
+      leaderboard: users.map((user, idx) => ({
+        rank: idx + 1,
+        id: user._id,
+        username: user.username,
+        reputationScore: user.reputationScore,
+        level: user.level,
+        accuracyRate: user.accuracyRate,
+        totalVotes: user.totalVotes,
+        badges: user.badges,
+      })),
+    });
+  } catch {
+    return res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
 
+// POST: leaderboard for specific userIds (for friends leaderboard)
+router.post("/", async (req, res) => {
+  const { userIds } = req.body;
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.json({ leaderboard: [] });
+  }
+  try {
+    const users = await User.find({ _id: { $in: userIds } })
+      .sort({ reputationScore: -1, accuracyRate: -1, createdAt: 1 })
+      .limit(50)
+      .select("username reputationScore level accuracyRate totalVotes badges")
+      .lean();
     return res.json({
       leaderboard: users.map((user, idx) => ({
         rank: idx + 1,

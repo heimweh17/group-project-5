@@ -1,3 +1,4 @@
+
 import express from "express";
 import mongoose from "mongoose";
 import { attachOptionalAuth, requireAuth } from "../middleware/auth.js";
@@ -7,6 +8,58 @@ import { CaseModel } from "../models/Case.js";
 import { User } from "../models/User.js";
 
 const router = express.Router();
+
+// --- FRIENDS SYSTEM ROUTES ---
+// Send a friend request
+router.post("/friends/request/:targetId", requireAuth, async (req, res) => {
+  const { targetId } = req.params;
+  if (req.user._id.toString() === targetId) return res.status(400).json({ error: "Cannot friend yourself" });
+  const target = await User.findById(targetId);
+  if (!target) return res.status(404).json({ error: "User not found" });
+  if (target.friends?.includes(req.user._id)) return res.status(400).json({ error: "Already friends" });
+  if (target.friendRequests?.includes(req.user._id)) return res.status(400).json({ error: "Request already sent" });
+  target.friendRequests = [...(target.friendRequests || []), req.user._id];
+  await target.save();
+  return res.json({ success: true });
+});
+
+// Accept a friend request
+router.post("/friends/accept/:requesterId", requireAuth, async (req, res) => {
+  const { requesterId } = req.params;
+  if (req.user.friendRequests?.includes(requesterId)) {
+    req.user.friends = [...(req.user.friends || []), requesterId];
+    req.user.friendRequests = req.user.friendRequests.filter((id) => id.toString() !== requesterId);
+    await req.user.save();
+    // Add user to requester's friends
+    const requester = await User.findById(requesterId);
+    if (requester) {
+      requester.friends = [...(requester.friends || []), req.user._id];
+      await requester.save();
+    }
+    return res.json({ success: true });
+  }
+  return res.status(400).json({ error: "No such friend request" });
+});
+
+// Remove a friend
+router.post("/friends/remove/:friendId", requireAuth, async (req, res) => {
+  const { friendId } = req.params;
+  req.user.friends = (req.user.friends || []).filter((id) => id.toString() !== friendId);
+  await req.user.save();
+  // Remove user from friend's list
+  const friend = await User.findById(friendId);
+  if (friend) {
+    friend.friends = (friend.friends || []).filter((id) => id.toString() !== req.user._id.toString());
+    await friend.save();
+  }
+  return res.json({ success: true });
+});
+
+// List friends (detailed)
+router.get("/friends/list", requireAuth, async (req, res) => {
+  const populated = await User.findById(req.user._id).populate("friends", "_id username email").populate("friendRequests", "_id username email");
+  return res.json({ friends: populated.friends, friendRequests: populated.friendRequests });
+});
 
 function calculateDifficultyBadges(difficultyBreakdown) {
   const badges = [];
@@ -217,6 +270,8 @@ async function buildUserProfilePayload(user, viewerRole = "public") {
       caseTitle: comment.caseId?.title || "Unknown case",
     })),
     joinedAt: user.createdAt,
+    friends: user.friends || [],
+    friendRequests: user.friendRequests || [],
   };
 
   if (viewerRole === "self") {

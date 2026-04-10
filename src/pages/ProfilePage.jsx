@@ -1,4 +1,44 @@
 import { useEffect, useState } from "react";
+import { useCallback } from "react";
+import { Link } from "react-router-dom";
+function FriendsList({ friends, friendRequests, onAccept, onRemove }) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h3>Friends</h3>
+      </div>
+      <div>
+        <strong>Friends:</strong>
+        {friends?.length ? (
+          <ul>
+            {friends.map((f) => (
+              <li key={f._id}>
+                {f.username} ({f.email})
+                <button style={{marginLeft: 8}} onClick={() => onRemove(f._id)}>Remove</button>
+                <Link className="btn btn-small btn-muted" style={{marginLeft: 8}} to={`/messages?userId=${f._id}`}>
+                  Message
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : <span>No friends yet.</span>}
+      </div>
+      <div style={{marginTop: 12}}>
+        <strong>Friend Requests:</strong>
+        {friendRequests?.length ? (
+          <ul>
+            {friendRequests.map((f) => (
+              <li key={f._id}>
+                {f.username} ({f.email})
+                <button style={{marginLeft: 8}} onClick={() => onAccept(f._id)}>Accept</button>
+              </li>
+            ))}
+          </ul>
+        ) : <span>No pending requests.</span>}
+      </div>
+    </section>
+  );
+}
 import {
   AnsweredCasesList,
   DifficultyBars,
@@ -118,13 +158,32 @@ function DifficultyBadges({ badges, role }) {
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     api("/users/me")
-      .then((result) => setProfile(result.user))
+      .then((result) => {
+        setProfile(result.user);
+        setFriends(result.user.friends || []);
+        setFriendRequests(result.user.friendRequests || []);
+      })
       .catch((err) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const handleAccept = async (requesterId) => {
+    await api(`/users/friends/accept/${requesterId}`, { method: "POST" });
+    loadProfile();
+  };
+  const handleRemove = async (friendId) => {
+    await api(`/users/friends/remove/${friendId}`, { method: "POST" });
+    loadProfile();
+  };
 
   if (error) return <p className="error">{error}</p>;
   if (!profile) return <p>Loading profile...</p>;
@@ -147,6 +206,8 @@ function ProfilePage() {
           </span>
         </div>
       </div>
+
+      <FriendsList friends={friends} friendRequests={friendRequests} onAccept={handleAccept} onRemove={handleRemove} />
 
       <div className="metrics-grid profile-metrics-grid">
         <MetricCard label="Score" value={profile.reputationScore} hint="Total reputation from case work" />

@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema(
     correctVotes: { type: Number, default: 0 },
     completedCases: [{ type: mongoose.Schema.Types.ObjectId, ref: "Case" }],
     badges: [{ type: String }],
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

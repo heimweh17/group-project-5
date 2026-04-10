@@ -14,6 +14,7 @@ function Layout() {
           <NavLink to="/">Home</NavLink>
           <NavLink to="/cases">Case Feed</NavLink>
           <NavLink to="/leaderboard">Leaderboard</NavLink>
+          {user ? <NavLink to="/messages">Messages</NavLink> : null}
           {user ? <NavLink to="/profile">Profile</NavLink> : <NavLink to="/auth">Login</NavLink>}
           {user?.role === "admin" ? <NavLink to="/admin">Admin</NavLink> : null}
         </nav>
