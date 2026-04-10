@@ -7,6 +7,7 @@ import caseRoutes from "./routes/caseRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 
 export function createApp() {
@@ -30,6 +31,7 @@ export function createApp() {
   app.use("/api/users", userRoutes);
   app.use("/api/leaderboard", leaderboardRoutes);
   app.use("/api/admin", adminRoutes);
+  app.use("/api/messages", messageRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -420,6 +420,137 @@ tr:nth-child(even) td {
   margin: 0;
 }
 
+.dm-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.dm-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+}
+
+.dm-thread-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dm-thread-list h3,
+.dm-chat-head h3 {
+  margin: 0;
+}
+
+.dm-thread-items {
+  display: grid;
+  gap: 0.65rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.dm-thread-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(117, 186, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(8, 17, 29, 0.86);
+  color: #eaf6ff;
+  padding: 0.7rem;
+  cursor: pointer;
+}
+
+.dm-thread-item.active {
+  border-color: rgba(126, 206, 255, 0.68);
+  background: rgba(14, 30, 48, 0.9);
+}
+
+.dm-thread-item p {
+  margin: 0.25rem 0;
+  color: #cde2f7;
+}
+
+.dm-thread-item small {
+  color: #8fb7dd;
+}
+
+.dm-thread-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dm-chat-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 600px;
+}
+
+.dm-chat-head {
+  border-bottom: 1px solid rgba(117, 186, 255, 0.14);
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.dm-messages {
+  overflow-y: auto;
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+  padding-right: 0.2rem;
+}
+
+.dm-bubble {
+  max-width: min(70%, 560px);
+  border: 1px solid rgba(117, 186, 255, 0.18);
+  border-radius: 14px;
+  padding: 0.65rem 0.8rem;
+  background: rgba(8, 17, 29, 0.86);
+}
+
+.dm-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.dm-bubble small {
+  color: #8fb7dd;
+}
+
+.dm-bubble.mine {
+  margin-left: auto;
+  background: linear-gradient(140deg, rgba(79, 166, 232, 0.24), rgba(26, 66, 110, 0.42));
+  border-color: rgba(130, 209, 255, 0.44);
+}
+
+.dm-bubble.theirs {
+  margin-right: auto;
+}
+
+.dm-compose {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.dm-compose textarea {
+  min-height: 74px;
+}
+
+@media (max-width: 900px) {
+  .dm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dm-chat-panel {
+    min-height: 500px;
+  }
+
+  .dm-bubble {
+    max-width: 100%;
+  }
+}
+
 .error {
   color: #ff9f9f;
 }

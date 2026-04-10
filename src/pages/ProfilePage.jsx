@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCallback } from "react";
+import { Link } from "react-router-dom";
 function FriendsList({ friends, friendRequests, onAccept, onRemove }) {
   return (
     <section className="panel">
@@ -14,6 +15,9 @@ function FriendsList({ friends, friendRequests, onAccept, onRemove }) {
               <li key={f._id}>
                 {f.username} ({f.email})
                 <button style={{marginLeft: 8}} onClick={() => onRemove(f._id)}>Remove</button>
+                <Link className="btn btn-small btn-muted" style={{marginLeft: 8}} to={`/messages?userId=${f._id}`}>
+                  Message
+                </Link>
               </li>
             ))}
           </ul>

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 // Copy of DifficultyBadges from ProfilePage for consistent achievement display
 function DifficultyBadges({ badges, role }) {
   const difficultyBadges = badges?.filter((b) => b.includes("_easy") || b.includes("_medium") || b.includes("_hard")) || [];
@@ -86,7 +87,6 @@ function DifficultyBadges({ badges, role }) {
     </div>
   );
 }
-import { useNavigate } from "react-router-dom";
 import {
   AnsweredCasesList,
   DifficultyBars,
@@ -100,31 +100,30 @@ import { api } from "../lib/api";
 import { useParams } from "react-router-dom";
 
 function PublicProfilePage() {
-  const navigate = useNavigate();
-    const [friendRequestSent, setFriendRequestSent] = useState(false);
-    async function sendFriendRequest() {
-      try {
-        await api(`/users/friends/request/${id}`, { method: "POST" });
-        setFriendRequestSent(true);
-      } catch (err) {
-        setError(err.message);
-      }
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
+  async function sendFriendRequest() {
+    try {
+      await api(`/users/friends/request/${id}`, { method: "POST" });
+      setFriendRequestSent(true);
+    } catch (err) {
+      setError(err.message);
     }
+  }
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [viewerRole, setViewerRole] = useState("public");
   const [error, setError] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
 
-  const loadProfile = useCallback(async () => {
+  async function loadProfile() {
     const result = await api(`/users/${id}`);
     setProfile(result.user);
     setViewerRole(result.viewerRole || "public");
-  }, [id]);
+  }
 
   useEffect(() => {
     loadProfile().catch((err) => setError(err.message));
-  }, [loadProfile]);
+  }, [id]);
 
   async function deleteComment(commentId) {
     try {
@@ -161,14 +160,18 @@ function PublicProfilePage() {
           </p>
           <DifficultyBadges badges={profile.badges} role={profile.role} />
           {viewerRole !== "self" && viewerRole !== "admin" && (
-            <button
-              className="btn btn-primary"
-              style={{marginTop: 12}}
-              onClick={sendFriendRequest}
-              disabled={friendRequestSent}
-            >
-              {friendRequestSent ? "Request Sent" : "Send Friend Request"}
-            </button>
+            <div style={{ display: "flex", gap: "8px", marginTop: 12, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-primary"
+                onClick={sendFriendRequest}
+                disabled={friendRequestSent}
+              >
+                {friendRequestSent ? "Request Sent" : "Send Friend Request"}
+              </button>
+              <Link className="btn btn-muted" to={`/messages?userId=${id}`}>
+                Message
+              </Link>
+            </div>
           )}
           {viewerRole === "admin" && profile.adminView ? (
             <div className="admin-private-block">
