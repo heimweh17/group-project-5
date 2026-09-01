@@ -1,17 +1,26 @@
 # ScamShield Hub
 
-ScamShield Hub is a full-stack phishing and scam detection training platform built for interactive learning. Users work through short cases, decide whether each case is a scam or safe, receive immediate feedback, and track their progress over time through profiles, badges, leaderboards, and social features.
+ScamShield Hub is a full-stack, case-based cybersecurity learning platform for practising phishing and scam detection. Learners inspect realistic email, SMS, and website scenarios, make a classification decision, receive immediate feedback, and track progress over time.
 
-This project was developed as a group software engineering course project and is structured as a React frontend with an Express + MongoDB backend.
+Built as a group software engineering project, the application demonstrates an end-to-end web system: a React single-page application, an Express REST API, MongoDB persistence, authenticated user flows, transactional email verification, social learning features, and a moderation dashboard.
 
-## What the Platform Does
+**Live application:** [scamshieldhub.vercel.app](https://scamshieldhub.vercel.app)<br>
+**API health check:** [group-project-5-iji1.onrender.com/api/health](https://group-project-5-iji1.onrender.com/api/health)
 
-- Lets users register, verify email, and log in
-- Presents phishing practice cases across email, SMS, and website formats
-- Gives instant feedback and explanations after each answer
-- Tracks score, level, accuracy, badges, and completed cases
-- Supports comments, public profiles, friend connections, and direct messages
-- Includes admin tools for case management and moderation
+> The API runs on Render's free tier and may take a short time to wake up after inactivity.
+
+## Problem and Approach
+
+Scam-awareness material is often passive: people read advice but do not practise applying it to concrete examples. ScamShield Hub turns that advice into short, repeatable decisions. It combines immediate feedback with progress data and optional social features so users can learn, compare results, and revisit completed cases for review.
+
+## Product Highlights
+
+- Verified account creation through a six-digit email code
+- Interactive phishing practice cases across email, SMS, and website formats
+- Immediate feedback and explanations after each answer
+- Learning metrics including score, level, accuracy, badges, and completed cases
+- Comments, public profiles, friend connections, direct messages, and group leaderboards
+- Role-protected tools for case management and moderation
 
 ## Current Feature Set
 
@@ -59,6 +68,49 @@ This project was developed as a group software engineering course project and is
 - bcrypt password hashing
 - Resend for email verification
 
+### Deployment
+
+- Vercel for the frontend
+- Render for the API
+- MongoDB Atlas for persistent data
+
+## Architecture
+
+```text
+React + Vite SPA (Vercel)
+          |
+          | HTTPS / JSON REST API
+          v
+Express API (Render)
+  | JWT authentication and authorization
+  | case scoring, profiles, moderation, messaging
+  |
+  +--> MongoDB Atlas: users, cases, votes, comments, messages, groups
+  +--> Resend: six-digit verification email delivery
+```
+
+The frontend uses React Router for client-side navigation, an authentication context for session state, and a shared API client. The backend separates route handlers, Mongoose models, middleware, utility functions, and the email service. This keeps the application small enough for a group project while maintaining clear boundaries between UI, business logic, and persistence.
+
+## Key Workflows
+
+### Account verification
+
+1. A user submits a username, email address, and password.
+2. The API creates a temporary `PendingSignup` record and sends a six-digit code through Resend.
+3. The user enters the code.
+4. Only then is the permanent user account created and eligible to sign in.
+
+Temporary signups expire automatically, so unfinished registrations do not permanently reserve a username or email address.
+
+### Case learning
+
+1. The learner browses, filters, searches, or sorts the case feed.
+2. They open a case and choose `scam`, `safe`, or `unsure`.
+3. The API stores one answer per user per case, updates learning metrics, and returns feedback.
+4. Completed cases remain accessible in the feed and through user profiles.
+
+The current scoring policy awards 10 points for a correct `scam` or `safe` answer, 2 points for an incorrect answer, and 1 point for `unsure`.
+
 ## Project Structure
 
 ```text
@@ -87,6 +139,12 @@ group-project-5/
 
 ## Local Development Setup
 
+### Prerequisites
+
+- Node.js 20+ (LTS recommended)
+- A MongoDB Atlas database or compatible MongoDB deployment
+- A Resend API key and verified sending domain for email verification
+
 ### 1. Install dependencies
 
 From the project root:
@@ -114,6 +172,8 @@ CLIENT_ORIGIN=http://localhost:5173
 RESEND_API_KEY=your_resend_api_key
 EMAIL_FROM=your_verified_sender_address
 ```
+
+Do not commit real credentials. Rotate any credential that is ever shared accidentally.
 
 ### 3. Start the backend
 
@@ -145,11 +205,22 @@ http://localhost:5173
 http://localhost:4000/api/health
 ```
 
+## Quality Checks
+
+Run these before opening a pull request or deploying frontend changes:
+
+```bash
+npm run lint
+npm run build
+```
+
+The application has also been validated through manual end-to-end flows covering registration and verification, login, case answering, profile updates, leaderboards, friend/message workflows, and administrator moderation.
+
 ## Deployment
 
-### Current Deployment Pattern
+### Deployment Model
 
-This project is designed to run with:
+The production deployment uses:
 
 - Frontend on Vercel
 - Backend on Render

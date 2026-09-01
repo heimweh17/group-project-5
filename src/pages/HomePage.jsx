@@ -23,8 +23,8 @@ function HomePage() {
         <div className="hero-showcase">
           <div className="metrics-grid landing-metrics">
             <div className="metric">
-              <strong>120+</strong>
-              <span>Practice cases ready to open</span>
+              <strong>Case-based</strong>
+              <span>Practice scenarios ready to explore</span>
             </div>
             <div className="metric">
               <strong>3</strong>
